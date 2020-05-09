@@ -72,7 +72,22 @@ export default {
         const combinedRules = Object.assign({ fireonempty: fireOnEmpty, cancelonempty: cancelOnEmpty, lock }, modifiers)
         const listener = mapOutListeningEvents(el.attributes, listenTo)
         const fn = debounce(e => {
-          debouncedFn(e.target.value, e)
+          if (Array.isArray(debouncedFn)) {
+            if (debouncedFn.length === 0) debouncedFn.push(() => {})
+            if (typeof debouncedFn[0] !== 'function') throw new Error('the first item of the value array should be function')
+
+            let params = debouncedFn.slice(1)
+
+            params = params.map(param => {
+              if (typeof param === 'function') {
+                return param()
+              }
+              return param
+            })
+            debouncedFn[0](e.target.value, e, ...params)
+          } else {
+            debouncedFn(e.target.value, e)
+          }
         }, timer)
 
         function handler (event) {
